@@ -41,6 +41,10 @@ def from_path(type_: types.GitObjectTypeEnum, path: pathlib.Path) -> types.GitOb
     return types.GitObject(type_=type_, data=data)
 
 
+def from_bytes(type_: types.GitObjectTypeEnum, data: bytes) -> types.GitObject:
+    return types.GitObject(type_=type_, data=data)
+
+
 def obj_hash(obj: types.GitObject) -> str:
     raw = f'{obj.type_.name.lower()} {len(obj.data)}\x00'.encode() + obj.data
 

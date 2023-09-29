@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+import sys
 from typing import Optional
 
 import pydantic
@@ -13,6 +14,7 @@ from .. import git_object
 class Argument(pydantic.BaseModel):
     type: types.GitObjectTypeEnum = types.GitObjectTypeEnum.BLOB
     write: bool = False
+    stdin: bool = False
     filepath: Optional[pathlib.Path] = None
 
     @classmethod
@@ -46,6 +48,8 @@ Options:
                 if not type_:
                     raise Exception(f'Unknown type: {type_}')
                 obj.type = type_
+            elif arg == '--stdin':
+                obj.stdin = True
             elif arg in ('-h', '--help'):
                 help()
                 exit(0)
@@ -68,10 +72,14 @@ Options:
 def main_hash_object(args_: list[str]) -> None:
     args = Argument.parse_args(args_)
 
-    if not args.filepath:
-        return
+    if args.stdin:
+        bytes = sys.stdin.buffer.read()
+    else:
+        if not args.filepath:
+            return
+        bytes = args.filepath.read_bytes()
 
-    obj = git_object.from_path(args.type, args.filepath)
+    obj = git_object.from_bytes(args.type, bytes)
 
     if args.write:
         gitdir = lib.locate_dominating_file(pathlib.Path.cwd(), '.git')
