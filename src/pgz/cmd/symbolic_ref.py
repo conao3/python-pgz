@@ -9,20 +9,20 @@ from .. import lib
 
 
 class Argument(pydantic.BaseModel):
+    name: Optional[str] = None
     ref: Optional[str] = None
-    newvalue: Optional[str] = None
 
     @classmethod
     def parse_args(cls, args_: list[str]) -> Argument:
         def help() -> None:
             print('''\
-update-ref: Update the object name stored in a ref safely.
+symbolic-ref: Update the object name stored in a ref safely.
 
-Usage: pgz update-ref [options...] <ref> <newvalue>
+Usage: pgz symbolic-ref [options...] <name> <ref>
 
 Arguments:
-    <ref>       Specify the ref.
-    <newvalue>  Specify the new value.
+    <name>  Specify the name.
+    <ref>   Specify the ref.
 
 Options:
     -h, --help    Show this message and exit.
@@ -44,23 +44,29 @@ Options:
             else:
                 args.append(arg)
 
-        if len(args) == 2:
-            obj.ref, obj.newvalue = args
+        if len(args) == 1:
+            obj.name = args[0]
+        elif len(args) == 2:
+            obj.name, obj.ref = args
         else:
             raise Exception('Invalid arguments')
 
         return obj
 
 
-def main_update_ref(args_: list[str]) -> None:
+def main_symbolic_ref(args_: list[str]) -> None:
     args = Argument.parse_args(args_)
 
-    if not args.ref or not args.newvalue:
+    if not args.name:
         raise Exception('Invalid arguments')
 
     gitdir = lib.locate_dominating_file(pathlib.Path.cwd(), '.git')
     if not gitdir:
         raise Exception('Not a git repository')
 
-    with lib.get_or_create_repo_file(gitdir, args.ref).open('w') as f:
-        f.write(args.newvalue + '\n')
+    if args.ref:
+        with lib.get_or_create_repo_file(gitdir, args.name).open('w') as f:
+            f.write(f'ref: {args.ref}\n')
+        return
+
+    print(lib.get_or_create_repo_file(gitdir, args.name).read_text().strip()[5:])

@@ -60,17 +60,17 @@ def main_init(args_: list[str]) -> None:
     if gitdir.exists():
         raise Exception(f'Already exists .git repository: {gitdir}')
 
-    lib.create_repo_dir(gitdir, 'branches')
-    lib.create_repo_dir(gitdir, 'objects')
-    lib.create_repo_dir(gitdir, 'refs/tags')
-    lib.create_repo_dir(gitdir, 'refs/heads')
+    lib.get_or_create_repo_dir(gitdir, 'branches')
+    lib.get_or_create_repo_dir(gitdir, 'objects')
+    lib.get_or_create_repo_dir(gitdir, 'refs/tags')
+    lib.get_or_create_repo_dir(gitdir, 'refs/heads')
 
-    with lib.create_repo_file(gitdir, 'description').open('w') as f:
+    with lib.get_or_create_repo_file(gitdir, 'description').open('w') as f:
         f.write("Unnamed repository; edit this file 'description' to name the repository.\n")
 
-    with lib.create_repo_file(gitdir, 'HEAD').open('w') as f:
+    with lib.get_or_create_repo_file(gitdir, 'HEAD').open('w') as f:
         f.write('ref: refs/heads/master\n')
 
-    with lib.create_repo_file(gitdir, 'config').open('w') as f:
+    with lib.get_or_create_repo_file(gitdir, 'config').open('w') as f:
         config_parser = repo_default_config()
         config_parser.write(f)

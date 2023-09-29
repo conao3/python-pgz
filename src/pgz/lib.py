@@ -2,7 +2,7 @@ import pathlib
 from typing import Optional
 
 
-def create_repo_file(gitdir: pathlib.Path, filename: str) -> pathlib.Path:
+def get_or_create_repo_file(gitdir: pathlib.Path, filename: str) -> pathlib.Path:
     filepath = gitdir / filename
     filepath.parent.mkdir(parents=True, exist_ok=True)
     filepath.touch()
@@ -10,7 +10,7 @@ def create_repo_file(gitdir: pathlib.Path, filename: str) -> pathlib.Path:
     return filepath
 
 
-def create_repo_dir(gitdir: pathlib.Path, dirname: str) -> pathlib.Path:
+def get_or_create_repo_dir(gitdir: pathlib.Path, dirname: str) -> pathlib.Path:
     dirpath = gitdir / dirname
     dirpath.mkdir(parents=True, exist_ok=True)
 

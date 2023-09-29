@@ -102,7 +102,7 @@ def obj_hash(obj: types.GitObject) -> str:
 
 def write_obj(obj: types.GitObject, gitdir: pathlib.Path) -> pathlib.Path:
     sha = obj_hash(obj)
-    filepath = lib.create_repo_file(gitdir, f'objects/{sha[:2]}/{sha[2:]}')
+    filepath = lib.get_or_create_repo_file(gitdir, f'objects/{sha[:2]}/{sha[2:]}')
 
     raw = f'{obj.type_.name.lower()} {len(obj.data)}\x00'.encode() + obj.data
     filepath.write_bytes(zlib.compress(raw))
