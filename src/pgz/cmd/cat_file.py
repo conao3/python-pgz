@@ -15,6 +15,7 @@ class Argument(pydantic.BaseModel):
     type: Optional[types.GitObjectTypeEnum] = None
     object: Optional[str] = None
     pretty: bool = False
+    show_type: bool = False
 
     @classmethod
     def parse_args(cls, args_: list[str]) -> Argument:
@@ -24,6 +25,7 @@ cat-file: Provide content or type and size information for repository objects.
 
 Usage: pgz cat-file [options...] <type> <object>
        pgz cat-file (-e | -p) <object>
+       pgz cat-file (-t | -s) <object>
 
 Arguments:
     <type>      Specify the type.  (commit, tree, tag, blob)
@@ -31,6 +33,7 @@ Arguments:
 
 Options:
     -p            Pretty-print the contents of <object> based on its type.
+    -t            Instead of the content, show the object type identified by <object>.
     -h, --help    Show this message and exit.
 ''')
 
@@ -44,6 +47,8 @@ Options:
                 break
             elif arg == '-p':
                 obj.pretty = True
+            elif arg == '-t':
+                obj.show_type = True
             elif arg in ('-h', '--help'):
                 help()
                 exit(0)
@@ -79,4 +84,9 @@ def main_cat_file(args_: list[str]) -> None:
         raise Exception('Not a git repository')
 
     obj = git_object.from_sha(gitdir, args.type, args.object)
+
+    if args.show_type:
+        print(obj.type_.name.lower())
+        return
+
     sys.stdout.buffer.write(obj.data)
