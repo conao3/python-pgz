@@ -79,7 +79,7 @@ def main_hash_object(args_: list[str]) -> None:
             return
         bytes = args.filepath.read_bytes()
 
-    obj = git_object.from_bytes(args.type, bytes)
+    obj = types.GitObject(type_=args.type, data=bytes)
 
     if args.write:
         gitdir = lib.locate_dominating_file(pathlib.Path.cwd(), '.git')

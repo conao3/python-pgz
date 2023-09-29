@@ -26,3 +26,13 @@ class GitObjectTypeEnum(enum.Enum):
 class GitObject(pydantic.BaseModel):
     type_: GitObjectTypeEnum
     data: bytes
+
+
+class GitObjectTreeItem(GitObject):
+    mode: str
+    path: str
+    sha: str
+
+
+class GitObjectTree(GitObject):
+    items: list[GitObjectTreeItem]

@@ -83,7 +83,10 @@ def main_cat_file(args_: list[str]) -> None:
     if not gitdir:
         raise Exception('Not a git repository')
 
-    obj = git_object.from_sha(gitdir, args.type, args.object)
+    obj = git_object.from_sha(gitdir, args.object)
+
+    if args.type and obj.type_ != args.type:
+        raise Exception(f'Object {args.object} is of type {obj.type_.name.lower()}, not {args.type.name.lower()}')
 
     if args.show_type:
         print(obj.type_.name.lower())
