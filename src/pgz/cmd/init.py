@@ -22,7 +22,33 @@ def repo_default_config() -> configparser.ConfigParser:
 class Argument(pydantic.BaseModel):
     @classmethod
     def parse_args(cls, args_: list[str]) -> Argument:
-        return cls()
+        def help() -> None:
+            print('''\
+init: Initialize a new, empty repository.
+
+Usage: pgz init [options...]
+
+Options:
+    -h, --help    Show this message and exit.
+''')
+
+        obj = cls()
+        args: list[str] = []
+
+        while args_:
+            arg = args_.pop(0)
+            if arg in ('-h', '--help'):
+                help()
+                exit(0)
+            elif arg.startswith('-'):
+                raise Exception(f'Unknown option: {arg}')
+            else:
+                args.append(arg)
+
+        if len(args) != 0:
+            raise Exception(f'Unknown arguments: {args}')
+
+        return obj
 
 
 def main_init(args_: list[str]) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+from typing import Optional
 
 import pydantic
 
@@ -10,26 +11,43 @@ from .. import git_object
 
 
 class Argument(pydantic.BaseModel):
-    type: types.GitObjectTypeEnum
-    write: bool
-    filepath: pathlib.Path
+    type: types.GitObjectTypeEnum = types.GitObjectTypeEnum.BLOB
+    write: bool = False
+    filepath: Optional[pathlib.Path] = None
 
     @classmethod
     def parse_args(cls, args_: list[str]) -> Argument:
+        def help() -> None:
+            print('''\
+hash-object: Compute object ID and optionally creates a blob from a file.
+
+Usage: pgz hash-object [options...] <file>
+
+Arguments:
+    <file>    Specify the file.
+
+Options:
+    -h, --help    Show this message and exit.
+    -w            Actually write the object into the object database.
+    -t <type>     Specify the type.  (commit, tree, tag, blob) (default: blob)
+''')
+
+        obj = cls()
         args: list[str] = []
-        type_ = types.GitObjectTypeEnum.BLOB
-        write_ = False
-        file_ = None
 
         while args_:
             arg = args_.pop(0)
             if arg == '-w':
-                write_ = True
+                obj.write = True
             elif arg == '-t':
                 raw_type = args_.pop(0)
                 type_ = types.GitObjectTypeEnum.from_str(raw_type)
                 if not type_:
                     raise Exception(f'Unknown type: {type_}')
+                obj.type = type_
+            elif arg in ('-h', '--help'):
+                help()
+                exit(0)
             elif arg == '--':
                 args.extend(args_)
                 break
@@ -38,13 +56,11 @@ class Argument(pydantic.BaseModel):
             else:
                 args.append(arg)
 
-        file_, = args
+        filepath_, = args
 
-        return cls(
-            type=type_,
-            write=write_,
-            filepath=pathlib.Path(file_),
-        )
+        obj.filepath = pathlib.Path(filepath_)
+
+        return obj
 
 
 def main_hash_object(args_: list[str]) -> None:
