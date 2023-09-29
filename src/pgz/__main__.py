@@ -3,6 +3,7 @@ import sys
 
 from . import cmd
 
+
 def list_main_functions() -> list[str]:
     fns = inspect.getmembers(cmd, inspect.isfunction)
     return list(elm[0] for elm in fns if elm[0].startswith('main_'))
