@@ -25,14 +25,15 @@ class GitObjectTypeEnum(enum.Enum):
 
 class GitObject(pydantic.BaseModel):
     type_: GitObjectTypeEnum
-    data: bytes
 
 
 class GitObjectBlob(GitObject):
-    pass
+    blob: bytes
 
 
 class GitObjectCommit(GitObject):
+    model_config = pydantic.ConfigDict(extra='allow')
+
     tree: str
     parent: Optional[str] = None
     author: bytes
@@ -51,4 +52,10 @@ class GitObjectTree(GitObject):
 
 
 class GitObjectTag(GitObject):
-    pass
+    model_config = pydantic.ConfigDict(extra='allow')
+
+    object: str
+    type: str
+    tag: str
+    tagger: bytes
+    message: bytes

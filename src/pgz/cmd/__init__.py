@@ -4,3 +4,4 @@ from .hash_object import main_hash_object as main_hash_object
 from .log import main_log as main_log
 from .update_ref import main_update_ref as main_update_ref
 from .symbolic_ref import main_symbolic_ref as main_symbolic_ref
+from .tag import main_tag as main_tag

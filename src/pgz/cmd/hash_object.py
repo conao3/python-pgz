@@ -79,13 +79,13 @@ def main_hash_object(args_: list[str]) -> None:
             return
         bytes = args.filepath.read_bytes()
 
-    obj = types.GitObjectBlob(type_=args.type, data=bytes)
+    obj = types.GitObjectBlob(type_=args.type, blob=bytes)
 
     if args.write:
         gitdir = lib.locate_dominating_file(pathlib.Path.cwd(), '.git')
         if not gitdir:
             raise Exception('Not a git repository')
 
-        git_object.write_obj(obj, gitdir)
+        git_object.write_(obj, gitdir)
 
-    print(git_object.obj_hash(obj))
+    print(git_object.hash_(obj))

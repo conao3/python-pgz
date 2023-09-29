@@ -35,13 +35,13 @@ def from_bytes(raw: bytes) -> types.GitObject:
     data = raw[size_end + 1:]
 
     if type_ == types.GitObjectTypeEnum.BLOB:
-        return types.GitObjectBlob(type_=type_, data=data)
+        return types.GitObjectBlob(type_=type_, blob=data)
     elif type_ == types.GitObjectTypeEnum.TREE:
         return parse_tree(data)
     elif type_ == types.GitObjectTypeEnum.COMMIT:
         return parse_commit(data)
     elif type_ == types.GitObjectTypeEnum.TAG:
-        return types.GitObjectTag(type_=type_, data=data)
+        return parse_tag(data)
 
     raise Exception(f'Unknown object type: {type_}')
 
@@ -57,6 +57,23 @@ def parse_key_value_list_with_message(raw: bytes) -> dict[str, bytes]:
         raw = raw[newline_pos + 1:]
 
     res['message'] = raw[1:]
+
+    return res
+
+
+def serialize_key_value_list_with_message(data: dict[str, Any]) -> bytes:
+    res = b''
+
+    for key, value in data.items():
+        if key == 'message':
+            continue
+
+        if isinstance(value, str):
+            value = value.encode()
+        res += key.encode() + b' ' + value + b'\n'
+
+    res += b'\n'
+    res += data['message']
 
     return res
 
@@ -95,20 +112,96 @@ def parse_tree(raw: bytes) -> types.GitObjectTree:
 
         raw = raw[path_end + 21:]
 
-    return types.GitObjectTree(type_=types.GitObjectTypeEnum.TREE, data=raw, items=items)
+    return types.GitObjectTree(type_=types.GitObjectTypeEnum.TREE, items=items)
 
 
-def obj_hash(obj: types.GitObject) -> str:
-    raw = f'{obj.type_.name.lower()} {len(obj.data)}\x00'.encode() + obj.data
+def parse_tag(raw: bytes) -> types.GitObjectTag:
+    body = parse_key_value_list_with_message(raw)
 
-    return hashlib.sha1(raw).hexdigest()
+    return types.GitObjectTag.model_validate(
+        body |
+        {
+            "type": body['type'].decode(),
+            "tag": body['tag'].decode(),
+            "tagger": body['tagger'],
+        } |
+        {
+            "type_": types.GitObjectTypeEnum.TAG,
+            "data": raw,
+        }
+    )
 
 
-def write_obj(obj: types.GitObject, gitdir: pathlib.Path) -> pathlib.Path:
-    sha = obj_hash(obj)
+def prettify(obj: types.GitObject) -> bytes:
+    if isinstance(obj, types.GitObjectBlob):
+        return obj.blob
+
+    elif isinstance(obj, types.GitObjectCommit):
+        data = obj.model_dump()
+        data.pop('type_')
+        return serialize_key_value_list_with_message(data)
+
+    elif isinstance(obj, types.GitObjectTree):
+        res = b''
+        type_mapping = {
+            '04': 'tree',
+            '10': 'blob',
+            '12': 'blob',
+            '16': 'commit',
+        }
+        for item in obj.items:
+            type_ = type_mapping.get(item.mode[:2])
+            if not type_:
+                raise Exception(f'Unknown mode: {item.mode}')
+            res += f'{item.mode} {type_} {item.sha}\t{item.path}\n'.encode()
+
+        return res
+
+    elif isinstance(obj, types.GitObjectTag):
+        data = obj.model_dump()
+        data.pop('type_')
+        return serialize_key_value_list_with_message(data)
+
+    raise Exception(f'Unknown object type: {obj.type_}')
+
+
+def serialize(obj: types.GitObject) -> bytes:
+    if isinstance(obj, types.GitObjectBlob):
+        return obj.blob
+
+    elif isinstance(obj, types.GitObjectCommit):
+        data = obj.model_dump()
+        data.pop('type_')
+        return serialize_key_value_list_with_message(data)
+
+    elif isinstance(obj, types.GitObjectTree):
+        res = b''
+
+        for item in obj.items:
+            res += item.mode.encode() + b' ' + item.path.encode() + b'\x00' + bytes.fromhex(item.sha)
+
+        return res
+
+    elif isinstance(obj, types.GitObjectTag):
+        data = obj.model_dump()
+        data.pop('type_')
+        return serialize_key_value_list_with_message(data)
+
+    raise Exception(f'Unknown object type: {obj.type_}')
+
+
+def hash_(obj: types.GitObject) -> tuple[str, bytes]:
+    data = serialize(obj)
+    raw = f'{obj.type_.name.lower()} {len(data)}\x00'.encode() + data
+
+    return hashlib.sha1(raw).hexdigest(), data
+
+
+def write_(obj: types.GitObject, gitdir: pathlib.Path) -> tuple[str, pathlib.Path]:
+    sha, data = hash_(obj)
     filepath = lib.get_or_create_repo_file(gitdir, f'objects/{sha[:2]}/{sha[2:]}')
 
-    raw = f'{obj.type_.name.lower()} {len(obj.data)}\x00'.encode() + obj.data
+    raw = f'{obj.type_.name.lower()} {len(data)}\x00'.encode() + data
     filepath.write_bytes(zlib.compress(raw))
 
-    return filepath
+    return sha, filepath

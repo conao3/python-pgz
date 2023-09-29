@@ -106,4 +106,4 @@ def main_cat_file(args_: list[str]) -> None:
             print(f'{item.mode} {type_} {item.sha}\t{item.path}')
         return
 
-    sys.stdout.buffer.write(obj.data)
+    sys.stdout.buffer.write(git_object.prettify(obj))
