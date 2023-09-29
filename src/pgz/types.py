@@ -28,6 +28,10 @@ class GitObject(pydantic.BaseModel):
     data: bytes
 
 
+class GitObjectBlob(GitObject):
+    pass
+
+
 class GitObjectCommit(GitObject):
     tree: str
     parent: Optional[str] = None
@@ -44,3 +48,7 @@ class GitObjectTreeItem(pydantic.BaseModel):
 
 class GitObjectTree(GitObject):
     items: list[GitObjectTreeItem]
+
+
+class GitObjectTag(GitObject):
+    pass

@@ -34,12 +34,16 @@ def from_bytes(raw: bytes) -> types.GitObject:
 
     data = raw[size_end + 1:]
 
-    if type_ == types.GitObjectTypeEnum.TREE:
+    if type_ == types.GitObjectTypeEnum.BLOB:
+        return types.GitObjectBlob(type_=type_, data=data)
+    elif type_ == types.GitObjectTypeEnum.TREE:
         return parse_tree(data)
     elif type_ == types.GitObjectTypeEnum.COMMIT:
         return parse_commit(data)
+    elif type_ == types.GitObjectTypeEnum.TAG:
+        return types.GitObjectTag(type_=type_, data=data)
 
-    return types.GitObject(type_=type_, data=data)
+    raise Exception(f'Unknown object type: {type_}')
 
 
 def parse_key_value_list_with_message(raw: bytes) -> dict[str, bytes]:
