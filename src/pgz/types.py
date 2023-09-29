@@ -28,6 +28,14 @@ class GitObject(pydantic.BaseModel):
     data: bytes
 
 
+class GitObjectCommit(GitObject):
+    tree: str
+    parent: Optional[str] = None
+    author: bytes
+    committer: bytes
+    message: bytes
+
+
 class GitObjectTreeItem(pydantic.BaseModel):
     mode: str
     path: str

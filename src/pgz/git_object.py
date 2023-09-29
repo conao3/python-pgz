@@ -1,5 +1,6 @@
 import hashlib
 import pathlib
+from typing import Any
 import zlib
 
 from . import types
@@ -35,8 +36,43 @@ def from_bytes(raw: bytes) -> types.GitObject:
 
     if type_ == types.GitObjectTypeEnum.TREE:
         return parse_tree(data)
+    elif type_ == types.GitObjectTypeEnum.COMMIT:
+        return parse_commit(data)
 
     return types.GitObject(type_=type_, data=data)
+
+
+def parse_key_value_list_with_message(raw: bytes) -> dict[str, bytes]:
+    res: dict[str, bytes] = {}
+
+    while (space_pos := raw.find(b' ')) < (newline_pos := raw.find(b'\n')):
+        key = raw[:space_pos].decode()
+        value = raw[space_pos + 1:newline_pos]
+
+        res[key] = value
+        raw = raw[newline_pos + 1:]
+
+    res['message'] = raw[1:]
+
+    return res
+
+
+def parse_commit(raw: bytes) -> types.GitObjectCommit:
+    body = parse_key_value_list_with_message(raw)
+
+    return types.GitObjectCommit.model_validate(
+        body |
+        {
+            "tree": body['tree'].decode(),
+            "parent": body.get('parent') and body['parent'].decode(),
+            "author": body['author'],
+            "committer": body['committer'],
+        } |
+        {
+            "type_": types.GitObjectTypeEnum.COMMIT,
+            "data": raw,
+        }
+    )
 
 
 def parse_tree(raw: bytes) -> types.GitObjectTree:
