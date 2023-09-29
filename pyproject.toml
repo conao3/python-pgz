@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pzg"
+name = "pgz"
 version = "0.1.0"
 description = ""
 authors = ["Naoya Yamashita <conao3@gmail.com>"]
@@ -7,7 +7,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.scripts]
-pzg = "pzg.__main__:main"
+pgz = "pgz.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.11"

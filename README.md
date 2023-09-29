@@ -1,1 +1,1 @@
-# python-pzg
+# python-pgz
