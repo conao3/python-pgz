@@ -1,5 +1,5 @@
-import argparse
 import inspect
+import sys
 
 from . import cmd
 
@@ -8,21 +8,12 @@ def list_main_functions() -> list[str]:
     return list(elm[0] for elm in fns if elm[0].startswith('main_'))
 
 
-def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(dest='command')
-
-    fns = inspect.getmembers(cmd, inspect.isfunction)
-    for add_parser in [elm[1] for elm in fns if elm[0].startswith('add_parser_')]:
-        add_parser(subparsers)
-
-    return parser, parser.parse_args()
-
-
 def main() -> None:
-    parser, args = parse_args()
+    _executable, command_, *args = sys.argv
+    command = 'main_' + command_.replace('-', '_')
 
-    if hasattr(args, 'handler'):
-        args.handler(args)
-    else:
-        parser.print_help()
+    commands = list_main_functions()
+    if command not in commands:
+        raise Exception(f'Unknown command: {command_}.  Available commands: {[elm[5:].replace("_", "-") for elm in commands]}')
+
+    getattr(cmd, command)(args)

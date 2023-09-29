@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import argparse
 import configparser
 import pathlib
+
+import pydantic
 
 from .. import lib
 
@@ -18,7 +19,15 @@ def repo_default_config() -> configparser.ConfigParser:
     return config_parser
 
 
-def main(args: argparse.Namespace) -> None:
+class Argument(pydantic.BaseModel):
+    @classmethod
+    def parse_args(cls, args_: list[str]) -> Argument:
+        return cls()
+
+
+def main_init(args_: list[str]) -> None:
+    _arg = Argument.parse_args(args_)
+
     worktree = pathlib.Path.cwd()
     gitdir = worktree / '.git'
 
@@ -39,10 +48,3 @@ def main(args: argparse.Namespace) -> None:
     with lib.create_repo_file(gitdir, 'config').open('w') as f:
         config_parser = repo_default_config()
         config_parser.write(f)
-
-    return
-
-
-def add_parser_init(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:  # type: ignore
-    parser = subparsers.add_parser('init')
-    parser.set_defaults(handler=main)

@@ -1,3 +1,3 @@
-from .init import add_parser_init as add_parser_init
-from .cat_file import add_parser_cat_file as add_parser_cat_file
-from .hash_object import add_parser_hash_object as add_parser_hash_object
+from .init import main_init as main_init
+from .cat_file import main_cat_file as main_cat_file
+from .hash_object import main_hash_object as main_hash_object

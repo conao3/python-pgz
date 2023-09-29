@@ -1,30 +1,51 @@
 from __future__ import annotations
 
-import argparse
 import pathlib
 import sys
+
+import pydantic
 
 from .. import lib
 from .. import types
 from .. import git_object
 
-def main(args: argparse.Namespace) -> None:
+
+class Argument(pydantic.BaseModel):
+    type: types.GitObjectTypeEnum
+    object: str
+
+    @classmethod
+    def parse_args(cls, args_: list[str]) -> Argument:
+        args: list[str] = []
+
+        while args_:
+            arg = args_.pop(0)
+            if arg == '--':
+                args.extend(args_)
+                break
+            elif arg.startswith('-'):
+                raise Exception(f'Unknown option: {arg}')
+            else:
+                args.append(arg)
+
+        type_, obj = args
+
+        enum_type = types.GitObjectTypeEnum.from_str(type_)
+        if not enum_type:
+            raise Exception(f'Unknown type: {type_}')
+
+        return cls(
+            type=enum_type,
+            object=obj,
+        )
+
+
+def main_cat_file(args_: list[str]) -> None:
+    args = Argument.parse_args(args_)
+
     gitdir = lib.locate_dominating_file(pathlib.Path.cwd(), '.git')
     if not gitdir:
         raise Exception('Not a git repository')
 
-    type_ = types.GitObjectTypeEnum.from_str(args.type)
-    if not type_:
-        raise Exception(f'Unknown type: {args.type}')
-
-    obj = git_object.from_sha(gitdir, type_, args.object)
+    obj = git_object.from_sha(gitdir, args.type, args.object)
     sys.stdout.buffer.write(obj.data)
-    return
-
-
-def add_parser_cat_file(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:  # type: ignore
-    parser = subparsers.add_parser('cat-file')
-    parser.add_argument('type', choices=['blob', 'commit', 'tag', 'tree'])
-    parser.add_argument('object')
-
-    parser.set_defaults(handler=main)

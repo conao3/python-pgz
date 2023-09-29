@@ -1,20 +1,56 @@
 from __future__ import annotations
 
-import argparse
 import pathlib
+
+import pydantic
 
 from .. import lib
 from .. import types
 from .. import git_object
 
 
-def main(args: argparse.Namespace) -> None:
-    filepath = pathlib.Path(args.file)
-    type_ = types.GitObjectTypeEnum.from_str(args.type)
-    if not type_:
-        raise Exception(f'Unknown type: {args.type}')
+class Argument(pydantic.BaseModel):
+    type: types.GitObjectTypeEnum
+    write: bool
+    filepath: pathlib.Path
 
-    obj = git_object.from_path(type_, filepath)
+    @classmethod
+    def parse_args(cls, args_: list[str]) -> Argument:
+        args: list[str] = []
+        type_ = types.GitObjectTypeEnum.BLOB
+        write_ = False
+        file_ = None
+
+        while args_:
+            arg = args_.pop(0)
+            if arg == '-w':
+                write_ = True
+            elif arg == '-t':
+                raw_type = args_.pop(0)
+                type_ = types.GitObjectTypeEnum.from_str(raw_type)
+                if not type_:
+                    raise Exception(f'Unknown type: {type_}')
+            elif arg == '--':
+                args.extend(args_)
+                break
+            elif arg.startswith('-'):
+                raise Exception(f'Unknown option: {arg}')
+            else:
+                args.append(arg)
+
+        file_, = args
+
+        return cls(
+            type=type_,
+            write=write_,
+            filepath=pathlib.Path(file_),
+        )
+
+
+def main_hash_object(args_: list[str]) -> None:
+    args = Argument.parse_args(args_)
+
+    obj = git_object.from_path(args.type, args.filepath)
 
     if args.write:
         gitdir = lib.locate_dominating_file(pathlib.Path.cwd(), '.git')
@@ -24,14 +60,3 @@ def main(args: argparse.Namespace) -> None:
         git_object.write_obj(obj, gitdir)
 
     print(git_object.obj_hash(obj))
-
-    return
-
-
-def add_parser_hash_object(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:  # type: ignore
-    parser = subparsers.add_parser('hash-object')
-    parser.add_argument('-t', '--type', choices=['blob', 'commit', 'tag', 'tree'], default='blob')
-    parser.add_argument('-w', '--write', action='store_true')
-    parser.add_argument('file')
-
-    parser.set_defaults(handler=main)
