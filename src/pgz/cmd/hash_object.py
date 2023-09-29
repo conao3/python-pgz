@@ -27,9 +27,10 @@ Arguments:
     <file>    Specify the file.
 
 Options:
-    -h, --help    Show this message and exit.
     -w            Actually write the object into the object database.
     -t <type>     Specify the type.  (commit, tree, tag, blob) (default: blob)
+    --stdin       Read the object from standard input instead of from a file.
+    -h, --help    Show this message and exit.
 ''')
 
         obj = cls()
@@ -56,15 +57,19 @@ Options:
             else:
                 args.append(arg)
 
-        filepath_, = args
+        filepath_, *_ = args + [None]
 
-        obj.filepath = pathlib.Path(filepath_)
+        if filepath_:
+            obj.filepath = pathlib.Path(filepath_)
 
         return obj
 
 
 def main_hash_object(args_: list[str]) -> None:
     args = Argument.parse_args(args_)
+
+    if not args.filepath:
+        return
 
     obj = git_object.from_path(args.type, args.filepath)
 
