@@ -47,6 +47,7 @@ def parse_tree(raw: bytes) -> types.GitObjectTree:
         path_end = raw.find(b'\x00')
 
         mode = raw[:mode_end].decode()
+        mode = f'{mode:0>6}'  # pad 0 with right align
         path = raw[mode_end + 1:path_end].decode()
         sha = raw[path_end + 1:path_end + 21].hex()
 
