@@ -18,7 +18,7 @@ def from_sha(gitdir: pathlib.Path, type_: Optional[types.GitObjectTypeEnum], sha
 
     file_type_ = raw[:type_end].decode()
     if type_:
-        if file_type_ != type_.name:
+        if file_type_ != type_.name.lower():
             raise Exception(f'Object {sha} is of type {file_type_}, not {type_}')
         obj_type = type_
     else:
