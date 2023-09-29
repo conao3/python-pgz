@@ -43,6 +43,6 @@ def main(args: argparse.Namespace) -> None:
     return
 
 
-def add_parser_init(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+def add_parser_init(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:  # type: ignore
     parser = subparsers.add_parser('init')
     parser.set_defaults(handler=main)
