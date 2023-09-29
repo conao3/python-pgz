@@ -92,4 +92,18 @@ def main_cat_file(args_: list[str]) -> None:
         print(obj.type_.name.lower())
         return
 
+    if isinstance(obj, types.GitObjectTree):
+        type_mapping = {
+            '04': 'tree',
+            '10': 'blob',
+            '12': 'blob',
+            '16': 'commit',
+        }
+        for item in obj.items:
+            type_ = type_mapping.get(item.mode[:2])
+            if not type_:
+                raise Exception(f'Unknown mode: {item.mode}')
+            print(f'{item.mode} {type_} {item.sha}\t{item.path}')
+        return
+
     sys.stdout.buffer.write(obj.data)

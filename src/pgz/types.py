@@ -28,7 +28,7 @@ class GitObject(pydantic.BaseModel):
     data: bytes
 
 
-class GitObjectTreeItem(GitObject):
+class GitObjectTreeItem(pydantic.BaseModel):
     mode: str
     path: str
     sha: str

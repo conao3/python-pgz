@@ -33,7 +33,28 @@ def from_bytes(raw: bytes) -> types.GitObject:
 
     data = raw[size_end + 1:]
 
+    if type_ == types.GitObjectTypeEnum.TREE:
+        return parse_tree(data)
+
     return types.GitObject(type_=type_, data=data)
+
+
+def parse_tree(raw: bytes) -> types.GitObjectTree:
+    items: list[types.GitObjectTreeItem] = []
+
+    while raw:
+        mode_end = raw.find(b' ')
+        path_end = raw.find(b'\x00')
+
+        mode = raw[:mode_end].decode()
+        path = raw[mode_end + 1:path_end].decode()
+        sha = raw[path_end + 1:path_end + 21].hex()
+
+        items.append(types.GitObjectTreeItem(mode=mode, path=path, sha=sha))
+
+        raw = raw[path_end + 21:]
+
+    return types.GitObjectTree(type_=types.GitObjectTypeEnum.TREE, data=raw, items=items)
 
 
 def obj_hash(obj: types.GitObject) -> str:
